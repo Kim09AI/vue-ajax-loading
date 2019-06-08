@@ -2,6 +2,8 @@ import Vue from 'vue'
 import { isArray, isObject, checkUnique } from './utils'
 import serviceProxy from './service-proxy'
 
+const isProd = process.env.NODE_ENV === 'production'
+
 function getFinallyService({ global, modules }) {
     const finallyService = {}
 
@@ -9,7 +11,8 @@ function getFinallyService({ global, modules }) {
         global = isArray(global) ? global : [global]
 
         global.forEach(obj => {
-            checkUnique(finallyService, obj)
+            !isProd && checkUnique(finallyService, obj)
+
             for (let prop in obj) {
                 finallyService[prop] = obj[prop]
             }
@@ -17,7 +20,7 @@ function getFinallyService({ global, modules }) {
     }
 
     if (isObject(modules) && Object.keys(modules).length > 0) {
-        checkUnique(finallyService, modules)
+        !isProd && checkUnique(finallyService, modules)
 
         for (let [namespace, value] of Object.entries(modules)) {
             !isObject(finallyService[namespace]) && (finallyService[namespace] = {})
@@ -51,18 +54,18 @@ function getLoadingState(finallyService) {
     return loadingState
 }
 
-export function ajaxLoading({ store, service, loading = '$loading' } = {}) {
+export function ajaxLoading({ store, service, loadingProp = '$loading' } = {}) {
     const finallyService = getFinallyService(service)
     const loadingState = getLoadingState(finallyService)
 
     // 初始化 loading 的状态
     store.commit('@@loading/INITIAL_LOADING', loadingState)
-    
-    if (typeof Vue.prototype[loading] !== 'undefined') {
-        console.warn(`Vue原型上已存在 Vue.prototype.${loading}`)
+
+    if (typeof Vue.prototype[loadingProp] !== 'undefined') {
+        console.warn(`Vue原型上已存在 Vue.prototype.${loadingProp}`)
     }
 
-    Vue.prototype[loading] = store.state.loading
+    Vue.prototype[loadingProp] = store.state.loading
 
     return serviceProxy(finallyService, store)
 }

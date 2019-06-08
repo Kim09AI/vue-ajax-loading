@@ -12,7 +12,7 @@ const service = {
         getTopicById(id = '5433d5e4e737cbe96dcef312') {
             return axios.get(`/topic/${id}`)
         },
-        test() {
+        delay() {
             return new Promise(resolve => {
                 setTimeout(() => {
                     console.log('complete')
